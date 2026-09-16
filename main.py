@@ -283,6 +283,8 @@ st.dataframe(
 # ==================================================
 # # ==========================================
 # ==========================================
+# 
+# ==========================================
 # 그래프 4
 # 영화별 일관객 합계 TOP 10
 # ==========================================
@@ -301,12 +303,12 @@ movie_summary = (
     df.groupby("영화명")
     .agg(
         일관객합계=("일관객", "sum"),
-        10위권에_든_날수=("날짜", "nunique")
+        top10_days=("날짜", "nunique")
     )
     .reset_index()
 )
 
-# 일관객 합계가 큰 순서로 정렬 후 TOP 10
+# 일관객 합계가 큰 순서로 TOP 10
 top10_movies = (
     movie_summary
     .sort_values("일관객합계", ascending=False)
@@ -314,7 +316,6 @@ top10_movies = (
     .copy()
 )
 
-# 가로 막대그래프는 아래에서 위로 그려지므로
 # 관객이 많은 영화가 위에 오도록 역순 정렬
 top10_movies = top10_movies.sort_values(
     "일관객합계",
@@ -334,21 +335,21 @@ fig4 = px.bar(
     },
     hover_data={
         "일관객합계": ":,.0f",
-        "10위권에_든_날수": ":,.0f"
+        "top10_days": ":,.0f"
     }
 )
 
 # 마우스를 올렸을 때 표시되는 정보
 fig4.update_traces(
+    customdata=top10_movies[
+        ["top10_days"]
+    ].values,
     hovertemplate=(
         "영화: %{y}<br>"
         "기간 내 일관객 합계: %{x:,.0f}명<br>"
         "10위권에 든 날수: %{customdata[0]}일"
         "<extra></extra>"
-    ),
-    customdata=top10_movies[
-        ["10위권에_든_날수"]
-    ].values
+    )
 )
 
 fig4.update_layout(
@@ -388,7 +389,7 @@ top10_display = top10_display.rename(
     columns={
         "영화명": "영화",
         "일관객합계": "기간 내 일관객 합계",
-        "10위권에_든_날수": "10위권에 든 날수"
+        "top10_days": "10위권에 든 날수"
     }
 )
 
