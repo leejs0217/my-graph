@@ -281,9 +281,118 @@ st.dataframe(
 
 
 # ==================================================
-# 그래프 4. 앞으로 추가할 영역
-# ==================================================
-st.divider()
-st.header("그래프 4")
+# # ==========================================
+# 그래프 4
+# 영화별 일관객 합계 TOP 10
+# ==========================================
 
-st.info("앞으로 추가할 그래프 영역입니다.")
+st.divider()
+
+st.header("그래프 4. 영화별 일관객 합계 TOP 10")
+
+st.write(
+    "이 기간 동안 일관객 합계가 가장 큰 10편의 영화를 "
+    "가로 막대그래프로 비교합니다."
+)
+
+# 영화별 일관객 합계와 10위권에 든 날수 계산
+movie_summary = (
+    df.groupby("영화명")
+    .agg(
+        일관객합계=("일관객", "sum"),
+        10위권에_든_날수=("날짜", "nunique")
+    )
+    .reset_index()
+)
+
+# 일관객 합계가 큰 순서로 정렬 후 TOP 10
+top10_movies = (
+    movie_summary
+    .sort_values("일관객합계", ascending=False)
+    .head(10)
+    .copy()
+)
+
+# 가로 막대그래프는 아래에서 위로 그려지므로
+# 관객이 많은 영화가 위에 오도록 역순 정렬
+top10_movies = top10_movies.sort_values(
+    "일관객합계",
+    ascending=True
+)
+
+# 가로 막대그래프
+fig4 = px.bar(
+    top10_movies,
+    x="일관객합계",
+    y="영화명",
+    orientation="h",
+    title="영화별 일관객 합계 TOP 10",
+    labels={
+        "일관객합계": "기간 내 일관객 합계",
+        "영화명": "영화"
+    },
+    hover_data={
+        "일관객합계": ":,.0f",
+        "10위권에_든_날수": ":,.0f"
+    }
+)
+
+# 마우스를 올렸을 때 표시되는 정보
+fig4.update_traces(
+    hovertemplate=(
+        "영화: %{y}<br>"
+        "기간 내 일관객 합계: %{x:,.0f}명<br>"
+        "10위권에 든 날수: %{customdata[0]}일"
+        "<extra></extra>"
+    ),
+    customdata=top10_movies[
+        ["10위권에_든_날수"]
+    ].values
+)
+
+fig4.update_layout(
+    xaxis_title="기간 내 일관객 합계 (명)",
+    yaxis_title="영화",
+    height=600,
+    yaxis=dict(
+        categoryorder="total ascending"
+    )
+)
+
+st.plotly_chart(
+    fig4,
+    use_container_width=True
+)
+
+# 설명 작성 자리
+st.subheader("이 그래프로 알 수 있는 것")
+
+st.info(
+    "여기에 이 그래프를 통해 알 수 있는 내용을 한 문장으로 작성하세요."
+)
+
+# TOP 10 표
+st.caption("일관객 합계 TOP 10 영화")
+
+top10_display = top10_movies.sort_values(
+    "일관객합계",
+    ascending=False
+).copy()
+
+top10_display["일관객합계"] = top10_display[
+    "일관객합계"
+].map(lambda x: f"{x:,.0f}명")
+
+top10_display = top10_display.rename(
+    columns={
+        "영화명": "영화",
+        "일관객합계": "기간 내 일관객 합계",
+        "10위권에_든_날수": "10위권에 든 날수"
+    }
+)
+
+st.dataframe(
+    top10_display,
+    hide_index=True,
+    use_container_width=True
+)
