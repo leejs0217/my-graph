@@ -304,7 +304,6 @@ movie_summary = (
     )
     .reset_index()
 )
-
 # 일관객 합계가 큰 순서로 정렬 후 TOP 10
 top10_movies = (
     movie_summary
