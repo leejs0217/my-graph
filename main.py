@@ -398,3 +398,109 @@ st.dataframe(
     hide_index=True,
     use_container_width=True
 )
+# ==========================================
+# 그래프 5
+# 월 × 요일별 일관객 합계 히트맵
+# ==========================================
+
+st.divider()
+
+st.header("그래프 5. 월 × 요일별 일관객 합계 히트맵")
+
+st.write(
+    "날짜에서 월과 요일을 뽑아, "
+    "월별·요일별 일관객 합계를 색으로 비교합니다."
+)
+
+# 날짜에서 월과 요일 추출
+heatmap_df = df.copy()
+
+heatmap_df["월"] = heatmap_df["날짜"].dt.month
+
+# 월요일 = 0, 일요일 = 6
+heatmap_df["요일번호"] = heatmap_df["날짜"].dt.dayofweek
+
+# 요일 이름
+weekday_names = [
+    "월요일",
+    "화요일",
+    "수요일",
+    "목요일",
+    "금요일",
+    "토요일",
+    "일요일"
+]
+
+heatmap_df["요일"] = heatmap_df["요일번호"].map(
+    dict(enumerate(weekday_names))
+)
+
+# 월 × 요일별 일관객 합계 계산
+monthly_weekday = (
+    heatmap_df
+    .groupby(["월", "요일번호", "요일"], as_index=False)["일관객"]
+    .sum()
+)
+
+# 피벗 테이블 생성
+heatmap_pivot = monthly_weekday.pivot(
+    index="월",
+    columns="요일",
+    values="일관객"
+)
+
+# 월요일부터 일요일 순서로 열 정렬
+heatmap_pivot = heatmap_pivot.reindex(
+    columns=weekday_names
+)
+
+# 1월부터 12월 순서로 행 정렬
+heatmap_pivot = heatmap_pivot.reindex(
+    range(1, 13)
+)
+
+# 히트맵
+fig5 = px.imshow(
+    heatmap_pivot,
+    labels=dict(
+        x="요일",
+        y="월",
+        color="일관객 합계"
+    ),
+    x=weekday_names,
+    y=[f"{month}월" for month in heatmap_pivot.index],
+    color_continuous_scale="YlOrRd",
+    aspect="auto",
+    title="월 × 요일별 일관객 합계"
+)
+
+# 마우스를 올렸을 때 표시되는 정보
+fig5.update_traces(
+    hovertemplate=(
+        "월: %{y}<br>"
+        "요일: %{x}<br>"
+        "일관객 합계: %{z:,.0f}명"
+        "<extra></extra>"
+    )
+)
+
+fig5.update_layout(
+    height=600,
+    xaxis_title="요일",
+    yaxis_title="월",
+    coloraxis_colorbar=dict(
+        title="일관객 합계"
+    )
+)
+
+st.plotly_chart(
+    fig5,
+    use_container_width=True
+)
+
+# 설명 작성 자리
+st.subheader("이 그래프로 알 수 있는 것")
+
+st.info(
+    "여기에 이 그래프를 통해 알 수 있는 내용을 한 문장으로 작성하세요."
+)
