@@ -171,12 +171,113 @@ st.info("여기에 그래프에서 알 수 있는 내용을 작성하세요.")
 
 
 # ==================================================
-# 그래프 3. 앞으로 추가할 영역
-# ==================================================
-st.divider()
-st.header("그래프 3")
+# ==========================================
+# 그래프 3
+# 날짜별 10위권 일관객 합계 영역 그래프
+# ==========================================
 
-st.info("앞으로 추가할 그래프 영역입니다.")
+st.divider()
+
+st.header("그래프 3. 날짜별 10위권 일관객 합계")
+
+st.write(
+    "매일 박스오피스 10위권 영화의 일관객을 모두 더해 "
+    "날짜별 전체 관객 규모를 확인합니다."
+)
+
+# 날짜별 일관객 합계 계산
+daily_total = (
+    df.groupby("날짜", as_index=False)["일관객"]
+    .sum()
+    .sort_values("날짜")
+)
+
+# 일관객 합계가 가장 큰 날 TOP 3
+top3_days = (
+    daily_total
+    .sort_values("일관객", ascending=False)
+    .head(3)
+    .sort_values("날짜")
+)
+
+# 영역 그래프
+fig3 = px.area(
+    daily_total,
+    x="날짜",
+    y="일관객",
+    title="날짜별 10위권 일관객 합계",
+    labels={
+        "날짜": "날짜",
+        "일관객": "10위권 일관객 합계"
+    },
+    hover_data={
+        "날짜": "|%Y-%m-%d",
+        "일관객": ":,.0f"
+    }
+)
+
+# 영역 그래프 위에 TOP 3 날짜 표시
+fig3.add_scatter(
+    x=top3_days["날짜"],
+    y=top3_days["일관객"],
+    mode="markers+text",
+    name="일관객 합계 TOP 3",
+    text=[
+        f"{date.strftime('%Y-%m-%d')}<br>{audience:,.0f}명"
+        for date, audience in zip(
+            top3_days["날짜"],
+            top3_days["일관객"]
+        )
+    ],
+    textposition="top center",
+    marker=dict(
+        size=11,
+        color="red",
+        line=dict(
+            width=1,
+            color="white"
+        )
+    ),
+    hovertemplate=(
+        "날짜: %{x|%Y-%m-%d}<br>"
+        "10위권 일관객 합계: %{y:,.0f}명"
+        "<extra></extra>"
+    )
+)
+
+fig3.update_layout(
+    hovermode="x unified",
+    xaxis_title="날짜",
+    yaxis_title="10위권 일관객 합계 (명)",
+    height=600
+)
+
+st.plotly_chart(
+    fig3,
+    use_container_width=True
+)
+
+# 설명 작성 자리
+st.subheader("이 그래프로 알 수 있는 것")
+
+st.info(
+    "여기에 이 그래프를 통해 알 수 있는 내용을 한 문장으로 작성하세요."
+)
+
+# TOP 3 날짜 표
+st.caption("일관객 합계가 가장 컸던 날 TOP 3")
+
+top3_display = top3_days.copy()
+top3_display["날짜"] = top3_display["날짜"].dt.strftime("%Y-%m-%d")
+top3_display["일관객"] = top3_display["일관객"].map(
+    lambda x: f"{x:,.0f}명"
+)
+
+st.dataframe(
+    top3_display,
+    hide_index=True,
+    use_container_width=True
+)
 
 
 # ==================================================
